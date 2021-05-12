@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<solicitud>
+  <detalles>
+    <pesoNeto>8000</pesoNeto>
+    <pesoBruto>5000</pesoBruto>
+    <cantidad>4</cantidad>
+    <envasePrimario>Eduardo</envasePrimario>
+    <marca>Eduardo</marca>
+  </detalles>
+  <detalles>
+    <pesoNeto>4000</pesoNeto>
+    <pesoBruto>50</pesoBruto>
+    <cantidad>4</cantidad>
+    <envasePrimario>Fernando</envasePrimario>
+    <marca>Fernando</marca>
+  </detalles>
+  <detalles>
+    <pesoNeto>5656</pesoNeto>
+    <pesoBruto>656565</pesoBruto>
+    <cantidad>213</cantidad>
+    <envasePrimario>Laura</envasePrimario>
+    <marca>Laura</marca>
+  </detalles>
+  <detalles>
+    <pesoNeto>9789798</pesoNeto>
+    <pesoBruto>897987</pesoBruto>
+    <cantidad>7</cantidad>
+    <envasePrimario>Santi</envasePrimario>
+    <marca>Santi</marca>
+  </detalles>
+</solicitud>
