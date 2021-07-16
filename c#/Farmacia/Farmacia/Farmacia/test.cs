@@ -21,7 +21,8 @@ namespace Farmacia
             cone.abrirconexion();
             cone.conexion2();
             cone.buscarDatos();
-         
+            cone.cerrarConexion();
+            cone.cerrarConexion2();
         }
 
         

@@ -17,7 +17,7 @@ namespace Farmacia
         SqlConnection cn;
         MySqlConnection cn2;
 
-        public int idcomprobante;
+        public string idcomprobante;
         public string modulo;
         public string Cod_comp;
         public int idproveedor;
@@ -31,6 +31,18 @@ namespace Farmacia
         public string cuit;
         public string estado;
         public double total;
+        public string tipo;
+        public int nroItem;
+        public int tipoGasto;
+        public char debeHaber;
+        public string codIVA;
+        public int AliIVA;
+        public double SuBruto;
+        public double M_int;
+        public double M_bon;
+        public double M_iva;
+        public double M_tot;
+        public int sucursal;
         public int cont;
         public int cont2;
 
@@ -95,58 +107,251 @@ namespace Farmacia
             }
         }
 
-        /**
-         * Agregar Registros a la tabla IM_movimientos
-         */
-        public void insertarIMmovimientos(string modulo, string cod_comp, char letra, int ptovta, int nro_comp, int cuotas, int permes, int peranio, int socio, string codDoc, long nroDoc, int sede, int codCondi, string fecha, string feContable, string cod_costo, double total, int estado)
+        public void buscarDatos()
         {
             try
             {
+                cn.Open();
+                MySqlDataReader reader = null;
+               
+                string mysql = "Select comprascabecera.IDComprobante, comprascabecera.tipo, comprascabecera.IDProveedor, comprascabecera.Letra, comprascabecera.PuntoVta, comprascabecera.Numero, EXTRACT(MONTH FROM comprascabecera.FechaEmision),EXTRACT(YEAR FROM comprascabecera.FechaEmision),comprascabecera.FechaEmision, comprascabecera.FechaImputación, comprascabecera.CUIT,comprascabecera.Total, comprascabecera.Estado, comprasdetalle.sucursal,comprasdetalle.IVAAlicuota,comprasdetalle.NetoExento, comprascabecera.IDTipoGasto FROM comprascabecera INNER JOIN comprasdetalle ON comprascabecera.IDComprobante = comprasdetalle.IDComprobante WHERE comprascabecera.fechaEmision between '2017-10-02' and '2017-11-01' AND CUIT<> '' and PuntoVta between 0 and 30000";
+                
+                MySqlCommand comando = new MySqlCommand(mysql, cn2);
+                reader = comando.ExecuteReader();
+
+               
+
+                List<string> lista = new List<string>();
+
+                if (reader.HasRows)
+                {
+
+                    while (reader.Read())
+                    {
+                        //GUARDO LOS RESULTADOS DE LA CONSULTA A LOS ATRIBUTOS
+                     
+                        this.tipo = reader.GetString(1);
+                        this.idproveedor = reader.GetInt32(2);
+                        this.letra = reader.GetChar(3);
+                        this.ptovta = reader.GetInt32(4);
+                        this.nro = reader.GetInt64(5);
+                        this.mes = reader.GetInt32(6);
+                        this.anio = reader.GetInt32(7);
+                        this.fechaemi = reader.GetString(8);
+                        this.fechaimpu = reader.GetString(9);
+                        this.cuit = reader.GetString(10);
+                        this.total = reader.GetDouble(11);
+                        this.estado = reader.GetString(12);
+                        this.sucursal = reader.GetInt32(13);
+                        this.AliIVA = reader.GetInt32(14);
+                        this.M_tot = reader.GetDouble(15);
+                        this.tipoGasto = reader.GetInt32(16);
+                        
+
+                        foreach (var row in lista)
+                        {
+                            // AGREGO LOS REGISTROS A LA LISTA
+                            lista.Add(Convert.ToString(idcomprobante));
+                            lista.Add(tipo);
+                            lista.Add(Convert.ToString(idproveedor));
+                            lista.Add(Convert.ToString(letra));
+                            lista.Add(Convert.ToString(ptovta));
+                            lista.Add(Convert.ToString(nro));
+                            lista.Add(Convert.ToString(mes));
+                            lista.Add(Convert.ToString(anio));
+                            lista.Add(fechaemi);
+                            lista.Add(fechaimpu);
+                            lista.Add(cuit);
+                            lista.Add(estado);
+                            lista.Add(Convert.ToString(total));
+                            lista.Add(Convert.ToString(sucursal));
+                            lista.Add(Convert.ToString(AliIVA));
+                            lista.Add(Convert.ToString(M_tot));
+                            lista.Add(Convert.ToString(tipoGasto));
+                        }
+
+                        int est = 0;
+                        if (estado == "C")
+                        {
+                            est = 2;
+                        }
+                        else if (estado == "A")
+                        {
+                            est = 1;
+                        }
+                        string id = idcomprobante;
+                        string ti = tipo;
+                        string mod = modulo;
+                        string CodComp = Cod_comp;
+                        int socio = idproveedor;
+                        char le = letra;
+                        int pvta = ptovta;
+                        long nro_comp = nro;
+                        int m = mes;
+                        int a = anio;
+                        string fecha = fechaemi;
+                        string feContable = fechaimpu;
+                        string nroDoc = this.cuit;
+                        double tot = this.total;
+                        int suc = this.sucursal;
+                        int iva = this.AliIVA;
+                        double mto = this.M_tot;
+                        int tipoG = this.tipoGasto;
+
+                        System.Guid miGUID = System.Guid.NewGuid();
+                        id = miGUID.ToString();
+
+                        insertarIMmovimientos(id,ti, mod, CodComp, socio, le, pvta, nro_comp, nroDoc, m, a, suc, fecha, feContable, tot, est, tipoG);
+                        insertarIMitems(id, nro_comp, tipoG, iva, mto);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("No se encontraron registros", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                
+                Console.WriteLine("\nComprobantes agregados: " + this.cont);
+                Console.WriteLine("Comprobantes NO agregados: " + this.cont2);
+                return;
+
+
+            }
+            catch (MySqlException ex)
+            {
+                MessageBox.Show("Error al buscar " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Console.WriteLine("ERRROR: "+ex.Message);
+            }
+        }
+
+                
+
+       
+
+        public void insertarIMmovimientos(string id, string ti,string mod, string cod_comp, int socio, char le, int pvta, long nro_comp, string nroDoc, int me, int a, int suc, string fecha, string feContable,  double tot, int Estado,int tipo)
+        {
+       
+            try
+            {
+               
+                /*
+                 * OBTENGO DATOS DE LA TABLA IM_COMPROBANTES Y LOS AGREGO EN IM_MOVIMIENTOS
+                 */
+                string Sql = "Select cod_alquimia, modulo FROM IM_comprobantes WHERE cod_tercero= '" + ti+"'";
+                SqlDataReader rea = null;
+                SqlCommand comando = new SqlCommand(Sql, cn);
+                rea = comando.ExecuteReader();
+                
+                if (rea.Read())
+                {
+                   
+                    cod_comp = rea["cod_alquimia"].ToString();
+                    mod = rea["modulo"].ToString();
+
+                   
+                }
+                rea.Close();
+
                 SqlCommand query = cn.CreateCommand();
                 SqlCommand query2 = cn.CreateCommand();
-
-                query2.CommandText = string.Format("SELECT COUNT(*) FROM IM_movimientos WHERE nro_comp = " + nro_comp + " AND letra='" + letra + "' AND cod_comp= '" + cod_comp + "'and pto_vta =" + ptovta);//STRING PARA COMPROBAR SI EXISTE EL COMPROBANTE
-
-                //VERIFICA SI EL COMPROBANTE YA EXISTE
+                /*
+                 * VERIFICO SI LOS COMPROBANTES EXISTEN
+                 */
+                query2.CommandText = string.Format("SELECT COUNT(*) FROM IM_movimientos WHERE nro_comp = " + nro_comp + " AND letra='" + le + "' AND cod_comp= '" + cod_comp + "' AND pto_vta =" + pvta);//STRING PARA COMPROBAR SI EXISTE EL COMPROBANTE             
                 int exis = int.Parse(query2.ExecuteScalar().ToString());
-                /*  if (exis != 0)
-                  {
-                      MessageBox.Show("Ya existe este comprobante", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                  }*/
-                //SI NO EXISTE
+              
+                //SI NO EXISTE:
                 while (exis == 0)
                 {
-                    //   else if (exis == 0) {
-                    query.CommandText = string.Format("INSERT INTO IM_movimientos(modulo,cod_comp,letra,pto_vta,nro_comp,cta_cant,per_mes,per_anio,nro_socio,cod_doc,nro_doc,cod_sede,cod_condi,fec_comp,fec_conta,cod_costo,t_total,estado) VALUES('" + modulo + "','" + cod_comp + "','" + letra + "'," + ptovta + "," + nro_comp + "," + cuotas + "," + permes + "," + peranio + "," + socio + ",'" + codDoc + "'," + nroDoc + "," + sede + "," + codCondi + ",'" + fecha + "','" + feContable + "','" + cod_costo + "'," + total + "," + estado + ")");
+
+                    query.CommandText = string.Format("INSERT INTO IM_movimientos(ID_comp,modulo,cod_comp,letra,pto_vta,nro_comp,cta_cant,per_mes,per_anio,nro_socio,cod_doc,nro_doc,cod_sede,cod_condi,fec_comp,fec_conta,cod_costo,t_total,estado) VALUES('"+id+"','" + mod+"' , '" + cod_comp + "' , '" + le + "' , " + pvta + " , " + nro_comp + " , " + 12 + " , " + me + " , " + a + " , " + socio + " , 'CUIT' , " + nroDoc.ToString().Replace("-", "") + " , " + suc + " , " + 1 + " , '" + fecha + "' , '" + feContable + "' , 'A' , " + tot.ToString().Replace(",", ".") + " , " + Estado + " ) " );
+
                     int fil = query.ExecuteNonQuery();
 
                     if (fil > 0)
                     {
-                        MessageBox.Show("Datos agregados correctamente");
-
+                        this.cont++;
                     }
                     else
                     {
-                        MessageBox.Show("No se agregaron registros", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Console.WriteLine("No se agregaron registros");
                     }
 
-                    cn.Close();
+                    return;
 
                 }
-                MessageBox.Show("Ya existe este comprobante", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                //SI EXISTE
+                Console.WriteLine("\n");
+                Console.Write("Ya existe el comprobante: Codigo: " + cod_comp + " -Letra: " + le + " -Punto de venta: " + pvta + " - Numero: " + nro_comp);
+                this.cont2++;
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine("Error al agregar registros IM_Movimientos "+ex.Message);
+            }
+            cn.Close();
+        }
+
+        public void insertarIMitems(string Id_comp, long nro,int tipoCodigo,double ali_iva,double total)
+        {
+            //insertarIMitems(int Id_comp, string tipo, int nro_item, int cod, char debe_haber, string cod_iva, double ali_iva, double sb, double interes, double bonificacion, double iva, double total)
+            try
+            {
+
+                cn.Open();
+                MySqlCommand my = cn2.CreateCommand();
+                my = new MySqlCommand("Select Count(comprasdetalle.IDComprobante) FROM comprasdetalle INNER JOIN comprascabecera ON comprasdetalle.IDComprobante = comprascabecera.IDComprobante where comprascabecera.numero = " + nro+ "");
+                int item = int.Parse(my.ExecuteScalar().ToString()); ;
+
+
+                /**
+               * OBTENGO VALORES DE LA TABLA IM_CODIGOS PARA INSERTARLOS EN LA TABLA IM_ITEMS
+               * */
+                string Sql = "Select cod_alquimia, tipo FROM IM_codigos WHERE cod_tercero= " + tipoCodigo + "";
+
+                SqlDataReader rea = null;
+                SqlCommand comando = new SqlCommand(Sql, cn);
+                rea = comando.ExecuteReader();
+
+                string tipo = "";
+                string cod = "";
+                if (rea.Read())
+                {
+                    tipo = rea["tipo"].ToString();
+                    cod = rea["cod_alquimia"].ToString();
+                    
+                }
+                rea.Close();
+
+              
+                /*
+                 * AGREGO DATOS A LA TABLA IM_ITEMS
+                 */
+                SqlCommand query = cn.CreateCommand();
+                query.CommandText = string.Format("INSERT INTO IM_items(ID,ID_comp,tipo,nro_item,codigo,debe_haber,cod_iva,ali_iva,m_sb,m_int,m_bon,m_iva,m_tot) VALUES("+0+",'" + Id_comp + "','"+tipo+"'," +item+ ",'" + cod + "','D','asd'," + ali_iva + "," + 100 + "," + 300 + "," + 400 + "," + 21.0 + "," + total.ToString().Replace(",", ".") + ")");
+
+                int fil = query.ExecuteNonQuery();
+
+                if (fil > 0)
+                {
+                   
+                }
+                else
+                {
+                    MessageBox.Show("No se agregaron registros", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+
             }
             catch (Exception exc)
             {
-                MessageBox.Show("Error al agregar registros en IMmovimientos: " + exc.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
+                Console.WriteLine("Error al agregar datos a IM_ITEMS: " + exc.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-
+           
         }
 
         /**
-         * Metodo para ingresar un registro en la tabla IM_auditoria
-         */
+        * Metodo para ingresar un registro en la tabla IM_auditoria
+        */
         public void insertarIMauditoria(int idc, int tip, string op, string det, string fecha, string usu, string eq)
         {
             try
@@ -175,182 +380,6 @@ namespace Farmacia
                 MessageBox.Show("Error al agregar datos: " + exc.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-        }
-
-        public void insertarIMitems(int Id_comp, string tipo, int nro_item, int cod, char debe_haber, string cod_iva, double ali_iva, double sb, double interes, double bonificacion, double iva, double total)
-        {
-            try
-            {
-                SqlCommand query = cn.CreateCommand();
-                int n = 0;
-                int tn = n + 1;
-
-                query.CommandText = string.Format("INSERT INTO IM_items(ID,tipo,nro_item,codigo,debe_haber,cod_iva,ali_iva,m_sb,m_int,m_bon,m_iva,m_tot) VALUES(" + tn + ",'" + tipo + "'," + nro_item + "," + cod + ",'" + debe_haber + "','" + cod_iva + "'," + ali_iva + "," + sb + "," + interes + "," + bonificacion + "," + iva + "," + total + ")");
-
-                int fil = query.ExecuteNonQuery();
-
-                if (fil > 0)
-                {
-                    MessageBox.Show("Datos agregados correctamente");
-                }
-                else
-                {
-                    MessageBox.Show("No se agregaron registros", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-
-                cn.Close(); //CERRAR BDD
-
-            }
-            catch (Exception exc)
-            {
-                MessageBox.Show("Error al agregar datos: " + exc.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                cn.Close();
-            }
-        }
-
-        public void buscarDatos()
-        {
-            try
-            {
-                cn.Open();
-                MySqlDataReader reader = null;
-
-                string sql = "Select IDComprobante, Tipo, IDProveedor, Letra, PuntoVta, Numero, EXTRACT(MONTH FROM FechaEmision), EXTRACT(YEAR FROM FechaEmision),FechaEmision, FechaImputación, CUIT, Total, Estado FROM comprascabecera WHERE fechaEmision between  '2017-10-02' and '2018-04-01' AND  CUIT <> '' and PuntoVta between 0 and 30000";
-
-                MySqlCommand comando = new MySqlCommand(sql, cn2);
-                reader = comando.ExecuteReader();
-                List<string> lista = new List<string>();
-                if (reader.HasRows)
-                {
-
-                    while (reader.Read())
-                    {
-                        //GUARDO LOS RESULTADOS DE LA CONSULTA A LOS ATRIBUTOS
-                        this.idcomprobante = reader.GetInt32(0);
-                        this.Cod_comp = reader.GetString(1);
-                        this.idproveedor = reader.GetInt32(2);
-                        this.letra = reader.GetChar(3);
-                        this.ptovta = reader.GetInt32(4);
-                        this.nro = reader.GetInt64(5);
-                        this.mes = reader.GetInt32(6);
-                        this.anio = reader.GetInt32(7);
-                        this.fechaemi = reader.GetString(8);
-                        this.fechaimpu = reader.GetString(9);
-                        this.cuit = reader.GetString(10);
-                        this.total = reader.GetDouble(11);
-                        this.estado = reader.GetString(12);
-
-                        foreach (var row in lista)
-                        {
-                           // AGREGO LOS REGISTROS A LA LISTA
-                            lista.Add(Convert.ToString(idcomprobante));
-                            lista.Add(modulo);
-                            lista.Add(Convert.ToString(idproveedor));
-                            lista.Add(Convert.ToString(letra));
-                            lista.Add(Convert.ToString(ptovta));
-                            lista.Add(Convert.ToString(nro));
-                            lista.Add(Convert.ToString(mes));
-                            lista.Add(Convert.ToString(anio));
-                            lista.Add(fechaemi);
-                            lista.Add(fechaimpu);
-                            lista.Add(cuit);
-                            lista.Add(estado);
-                            lista.Add(Convert.ToString(total));
-
-
-                            }
-                            int est = 0;
-                            if (estado == "C")
-                            {
-                                est = 2;
-                            }
-                            else if (estado == "A")
-                            {
-                                est = 1;
-                            }
-
-                            int id = idcomprobante;
-                            string mod = modulo;
-                            string CodComp = Cod_comp;
-                            int socio = idproveedor;
-                            char le = letra;
-                            int pvta = ptovta;
-                            long nro_comp = nro;
-                            int m = mes;
-                            int a = anio;
-                            string fecha = fechaemi;
-                            string feContable = fechaimpu;
-                            string nroDoc = this.cuit;
-                            double tot = this.total;
-
-                            // string Estado = this.estado;
-                            insertarIMmovimientos2(id, mod, CodComp, socio, le, pvta, nro_comp, nroDoc, m, a, fecha, feContable, tot, est);
-                            // insertarIMitems(id,it);
-                    }
-                   
-                }
-                else
-                {
-                    MessageBox.Show("No se encontraron registros", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                Console.Write("\n");
-                Console.WriteLine("Comprobantes agregados: " + this.cont);
-                Console.WriteLine("Comprobantes NO agregados: " + this.cont2);
-                return;
-
-
-            }
-            catch (MySqlException ex)
-            {
-                MessageBox.Show("Error al buscar " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        public void insertarIMmovimientos2(int id, string mod, string cod_comp, int socio, char le, int pvta, long nro_comp, string nroDoc, int me, int a, string fecha, string feContable,  double tot, int Estado)
-        {
-       
-            try
-            {
-                SqlCommand query = cn.CreateCommand();
-                SqlCommand query2 = cn.CreateCommand();
-
-                query2.CommandText = string.Format("SELECT COUNT(*) FROM IM_movimientos WHERE nro_comp = " + nro_comp + " AND letra='" + le + "' AND cod_comp= '" + cod_comp + "' AND pto_vta =" + pvta);//STRING PARA COMPROBAR SI EXISTE EL COMPROBANTE
-             
-                //VERIFICA SI EL COMPROBANTE YA EXISTE
-                int exis = int.Parse(query2.ExecuteScalar().ToString());
-              
-                while (exis == 0)
-                {
-
-                    query.CommandText = string.Format("INSERT INTO IM_movimientos(modulo,cod_comp,letra,pto_vta,nro_comp,cta_cant,per_mes,per_anio,nro_socio,cod_doc,nro_doc,cod_sede,cod_condi,fec_comp,fec_conta,cod_costo,t_total,estado) VALUES('PV' , '" + cod_comp + "' , '" + le + "' , " + pvta + " , " + nro_comp + " , " + 12 + " , " + me + " , " + a + " , " + socio + " , 'CUIT' , " + nroDoc.ToString().Replace("-", "") + " , " + 1 + " , " + 1 + " , '" + fecha + "' , '" + feContable + "' , 'A' , " + tot.ToString().Replace(",", ".") + " , " + Estado + " ) " );
-
-                    int fil = query.ExecuteNonQuery();
-
-                    if (fil > 0)
-                    {
-                        this.cont++;
-                    }
-                    else
-                    {
-                        Console.WriteLine("No se agregaron registros");
-                    }
-
-                    return;
-
-                }
-                Console.WriteLine("\n");
-                Console.Write("Ya existe el comprobante: Codigo: " + cod_comp + " -Letra: " + le + " -Punto de venta: " + pvta + " - Numero: " + nro_comp);
-                this.cont2++;
-            }
-            catch (SqlException ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-
-          
         }
     }
 }
