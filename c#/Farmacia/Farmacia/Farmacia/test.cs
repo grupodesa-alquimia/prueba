@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using MySql.Data.MySqlClient;
 using System.Data;
 using System.Data.Sql;
-using System.Data.SqlClient;
-using System.Windows.Forms;
-
-
+using System.Net;
 
 namespace Farmacia
 {
@@ -21,10 +21,12 @@ namespace Farmacia
             cone.abrirconexion();
             cone.conexion2();
             cone.buscarDatos();
-            cone.cerrarConexion();
-            cone.cerrarConexion2();
+            
+            //string detalle = string.Format("N° de comprobante: " + 4000 + ", Letra: " + 'A' + ", Punto de venta: " + 5 + ", Codigo: " + 6);
+            //Console.WriteLine(detalle);
+
         }
 
-        
+
     }
 }
